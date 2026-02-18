@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AU Job Application Autofill</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      background: #f4f6f9;
+      color: #2d3748;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1a56db 0%, #0e9f6e 100%);
+      padding: 14px 18px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header h1 { font-size: 15px; font-weight: 700; }
+    .header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+    .flag { font-size: 22px; }
+
+    .profile-bar {
+      display: flex;
+      align-items: center;
+      padding: 8px 14px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      gap: 8px;
+    }
+
+    .profile-bar label { font-size: 11px; color: #718096; white-space: nowrap; }
+
+    .profile-bar select {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 12px;
+      background: white;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .profile-bar button {
+      padding: 4px 10px;
+      font-size: 11px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f7fafc;
+      cursor: pointer;
+      color: #4a5568;
+      white-space: nowrap;
+    }
+
+    .profile-bar button:hover { background: #edf2f7; }
+
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 2px solid #e2e8f0;
+      overflow-x: auto;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 9px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 11px;
+      color: #718096;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+
+    .tab.active { color: #1a56db; border-bottom-color: #1a56db; font-weight: 600; }
+    .tab:hover:not(.active) { color: #2d3748; background: #f7fafc; }
+
+    .tab-content {
+      display: none;
+      padding: 12px 14px;
+      max-height: 390px;
+      overflow-y: auto;
+      background: #f4f6f9;
+    }
+
+    .tab-content.active { display: block; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #a0aec0;
+      margin: 14px 0 7px;
+    }
+
+    .section-label:first-child { margin-top: 0; }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .field-row:last-child { margin-bottom: 0; }
+
+    .field-row label {
+      width: 110px;
+      flex-shrink: 0;
+      font-size: 11.5px;
+      color: #4a5568;
+      text-align: right;
+      line-height: 1.3;
+    }
+
+    .field-row input,
+    .field-row select,
+    .field-row textarea {
+      flex: 1;
+      padding: 5px 9px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 12px;
+      background: white;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    .field-row textarea {
+      resize: vertical;
+      min-height: 52px;
+      line-height: 1.4;
+    }
+
+    .field-row input:focus,
+    .field-row select:focus,
+    .field-row textarea:focus {
+      border-color: #1a56db;
+      box-shadow: 0 0 0 2px rgba(26,86,219,0.1);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .two-col .field-row { margin-bottom: 0; }
+
+    .hint {
+      font-size: 10px;
+      color: #a0aec0;
+      margin-top: 4px;
+      padding-left: 118px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      font-family: inherit;
+    }
+
+    .btn-save {
+      background: #ebf5fb;
+      color: #1a56db;
+      border: 1px solid #bee3f8;
+    }
+
+    .btn-save:hover { background: #dbeafe; }
+
+    .btn-fill {
+      background: linear-gradient(135deg, #1a56db 0%, #0e9f6e 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(26,86,219,0.3);
+    }
+
+    .btn-fill:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,86,219,0.4); }
+    .btn-fill:active { transform: translateY(0); }
+
+    .status {
+      text-align: center;
+      font-size: 11px;
+      padding: 5px 14px;
+      min-height: 22px;
+      color: #a0aec0;
+    }
+
+    .status.ok { color: #0e9f6e; }
+    .status.err { color: #e53e3e; }
+
+    /* scrollbar */
+    .tab-content::-webkit-scrollbar { width: 4px; }
+    .tab-content::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="flag">🇦🇺</span>
+    <div>
+      <h1>AU Job Application Autofill</h1>
+      <p>One-click form filling for Australian job applications</p>
+    </div>
+  </div>
+</div>
+
+<div class="profile-bar">
+  <label>Profile:</label>
+  <select id="profileSelect">
+    <option value="default">Default</option>
+    <option value="grad">Graduate Programs</option>
+    <option value="intern">Internship</option>
+  </select>
+  <button id="newProfileBtn">+ New</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="personal">Personal</div>
+  <div class="tab" data-tab="address">Address</div>
+  <div class="tab" data-tab="work">Work Rights</div>
+  <div class="tab" data-tab="edu">Education</div>
+  <div class="tab" data-tab="job">Job Prefs</div>
+  <div class="tab" data-tab="extra">Extra</div>
+</div>
+
+<!-- PERSONAL -->
+<div class="tab-content active" id="tab-personal">
+  <div class="section-label">Name</div>
+  <div class="card">
+    <div class="field-row"><label>First Name</label><input id="f_firstName" placeholder="Jane"/></div>
+    <div class="field-row"><label>Last Name</label><input id="f_lastName" placeholder="Smith"/></div>
+    <div class="field-row"><label>Preferred Name</label><input id="f_preferredName" placeholder="Optional nickname"/></div>
+    <div class="field-row"><label>Pronouns</label><input id="f_pronouns" placeholder="she/her"/></div>
+  </div>
+
+  <div class="section-label">Contact</div>
+  <div class="card">
+    <div class="field-row"><label>Mobile</label><input id="f_phone" placeholder="0412 345 678"/></div>
+    <div class="field-row"><label>Email</label><input id="f_email" type="email" placeholder="jane@email.com"/></div>
+    <div class="field-row"><label>LinkedIn URL</label><input id="f_linkedin" placeholder="linkedin.com/in/janesmith"/></div>
+    <div class="field-row"><label>Portfolio / Website</label><input id="f_website" placeholder="https://janesmith.com"/></div>
+    <div class="field-row"><label>GitHub</label><input id="f_github" placeholder="github.com/janesmith"/></div>
+  </div>
+
+  <div class="section-label">Personal Details</div>
+  <div class="card">
+    <div class="field-row"><label>Date of Birth</label><input id="f_dob" type="date"/></div>
+    <div class="field-row"><label>Gender</label>
+      <select id="f_gender">
+        <option value="">Prefer not to say</option>
+        <option value="Female">Female</option>
+        <option value="Male">Male</option>
+        <option value="Non-binary">Non-binary / Gender diverse</option>
+        <option value="Self-describe">I use a different term</option>
+        <option value="Prefer not to say">Prefer not to say</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Indigenous</label>
+      <select id="f_indigenous">
+        <option value="">Prefer not to say</option>
+        <option value="No">No</option>
+        <option value="Yes - Aboriginal">Yes – Aboriginal</option>
+        <option value="Yes - Torres Strait Islander">Yes – Torres Strait Islander</option>
+        <option value="Yes - Both">Yes – Both</option>
+        <option value="Prefer not to say">Prefer not to say</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Disability</label>
+      <select id="f_disability">
+        <option value="">Prefer not to say</option>
+        <option value="No">No</option>
+        <option value="Yes">Yes</option>
+        <option value="Prefer not to say">Prefer not to say</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ADDRESS -->
+<div class="tab-content" id="tab-address">
+  <div class="section-label">Current Address</div>
+  <div class="card">
+    <div class="field-row"><label>Street / Unit</label><input id="f_street" placeholder="12 George St"/></div>
+    <div class="field-row"><label>Suburb</label><input id="f_suburb" placeholder="Sydney"/></div>
+    <div class="field-row"><label>State</label>
+      <select id="f_state">
+        <option value="">Select state</option>
+        <option value="NSW">NSW</option>
+        <option value="VIC">VIC</option>
+        <option value="QLD">QLD</option>
+        <option value="WA">WA</option>
+        <option value="SA">SA</option>
+        <option value="TAS">TAS</option>
+        <option value="ACT">ACT</option>
+        <option value="NT">NT</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Postcode</label><input id="f_postcode" placeholder="2000" maxlength="4"/></div>
+    <div class="field-row"><label>Country</label><input id="f_country" placeholder="Australia"/></div>
+  </div>
+
+  <div class="section-label">Relocation</div>
+  <div class="card">
+    <div class="field-row"><label>Willing to Relocate?</label>
+      <select id="f_relocate">
+        <option value="">Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Open to discussion">Open to discussion</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Preferred Location(s)</label><input id="f_preferredLocation" placeholder="Sydney, Melbourne"/></div>
+  </div>
+</div>
+
+<!-- WORK RIGHTS -->
+<div class="tab-content" id="tab-work">
+  <div class="section-label">Work Rights in Australia</div>
+  <div class="card">
+    <div class="field-row"><label>Work Rights</label>
+      <select id="f_workRights">
+        <option value="">Select</option>
+        <option value="Australian Citizen">Australian Citizen</option>
+        <option value="Australian Permanent Resident">Australian Permanent Resident</option>
+        <option value="New Zealand Citizen">New Zealand Citizen</option>
+        <option value="Student Visa (500)">Student Visa (Subclass 500)</option>
+        <option value="Graduate Visa (485)">Graduate Visa (Subclass 485)</option>
+        <option value="Skilled Visa (482)">Skilled Visa (Subclass 482)</option>
+        <option value="Bridging Visa">Bridging Visa</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Eligible to Work?</label>
+      <select id="f_eligibleToWork">
+        <option value="">Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Visa Expiry Date</label><input id="f_visaExpiry" type="date"/></div>
+    <div class="field-row"><label>Work Hours Limit</label><input id="f_workHours" placeholder="e.g. 48 hrs/fortnight (student visa)"/></div>
+    <div class="field-row"><label>Require Sponsorship?</label>
+      <select id="f_sponsorship">
+        <option value="">Select</option>
+        <option value="No">No</option>
+        <option value="Yes">Yes, now</option>
+        <option value="In future">No, but may need in future</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-label">Security &amp; Clearance</div>
+  <div class="card">
+    <div class="field-row"><label>Security Clearance</label>
+      <select id="f_clearance">
+        <option value="">None / N/A</option>
+        <option value="None">None</option>
+        <option value="Baseline">Baseline</option>
+        <option value="NV1">Negative Vetting Level 1</option>
+        <option value="NV2">Negative Vetting Level 2</option>
+        <option value="PV">Positive Vetting</option>
+      </select>
+    </div>
+    <div class="field-row"><label>National Police Check</label>
+      <select id="f_policeCheck">
+        <option value="">Select</option>
+        <option value="Yes">Yes, completed</option>
+        <option value="Willing">Willing to obtain</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Working with Children</label>
+      <select id="f_wwcc">
+        <option value="">N/A</option>
+        <option value="Yes">Yes, current</option>
+        <option value="Willing">Willing to obtain</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- EDUCATION -->
+<div class="tab-content" id="tab-edu">
+  <div class="section-label">Highest Qualification</div>
+  <div class="card">
+    <div class="field-row"><label>Degree Level</label>
+      <select id="f_degreeLevel">
+        <option value="">Select</option>
+        <option value="PhD / Doctorate">PhD / Doctorate</option>
+        <option value="Master's">Master's Degree</option>
+        <option value="Graduate Diploma">Graduate Diploma</option>
+        <option value="Bachelor's">Bachelor's Degree</option>
+        <option value="Advanced Diploma">Advanced Diploma</option>
+        <option value="Diploma">Diploma</option>
+        <option value="Certificate IV">Certificate IV</option>
+        <option value="High School">High School / Year 12</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Field of Study</label><input id="f_fieldOfStudy" placeholder="Computer Science"/></div>
+    <div class="field-row"><label>University / Institution</label><input id="f_university" placeholder="University of Melbourne"/></div>
+    <div class="field-row"><label>Graduation Year</label><input id="f_gradYear" placeholder="2025" type="number" min="2000" max="2035"/></div>
+    <div class="field-row"><label>GPA / WAM</label><input id="f_gpa" placeholder="e.g. 6.5 / 75 WAM"/></div>
+    <div class="field-row"><label>Grade / Honours</label>
+      <select id="f_honours">
+        <option value="">Select</option>
+        <option value="High Distinction">High Distinction</option>
+        <option value="Distinction">Distinction</option>
+        <option value="Credit">Credit</option>
+        <option value="Pass">Pass</option>
+        <option value="First Class Honours">First Class Honours</option>
+        <option value="Second Class Honours (Division 1)">Second Class Honours (Div 1)</option>
+        <option value="Second Class Honours (Division 2)">Second Class Honours (Div 2)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-label">Previous Education</div>
+  <div class="card">
+    <div class="field-row"><label>Prior Degree</label><input id="f_priorDegree" placeholder="e.g. Bachelor of Arts"/></div>
+    <div class="field-row"><label>Prior University</label><input id="f_priorUni" placeholder="University of Sydney"/></div>
+    <div class="field-row"><label>Prior Grad Year</label><input id="f_priorGradYear" placeholder="2022" type="number"/></div>
+  </div>
+
+  <div class="section-label">Certifications &amp; Licences</div>
+  <div class="card">
+    <div class="field-row"><label>Driver's Licence</label>
+      <select id="f_licence">
+        <option value="">N/A</option>
+        <option value="Full (C class)">Full (C class)</option>
+        <option value="Provisional">Provisional</option>
+        <option value="Learner">Learner</option>
+        <option value="No">No licence</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Licence State</label>
+      <select id="f_licenceState">
+        <option value="">Select</option>
+        <option value="NSW">NSW</option>
+        <option value="VIC">VIC</option>
+        <option value="QLD">QLD</option>
+        <option value="WA">WA</option>
+        <option value="SA">SA</option>
+        <option value="TAS">TAS</option>
+        <option value="ACT">ACT</option>
+        <option value="NT">NT</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Other Certs</label><input id="f_certs" placeholder="AWS Solutions Architect, PMP…"/></div>
+  </div>
+</div>
+
+<!-- JOB PREFS -->
+<div class="tab-content" id="tab-job">
+  <div class="section-label">Role Preferences</div>
+  <div class="card">
+    <div class="field-row"><label>Desired Role</label><input id="f_desiredRole" placeholder="Software Engineer"/></div>
+    <div class="field-row"><label>Employment Type</label>
+      <select id="f_employmentType">
+        <option value="">Select</option>
+        <option value="Full-time">Full-time</option>
+        <option value="Part-time">Part-time</option>
+        <option value="Casual">Casual</option>
+        <option value="Contract">Contract</option>
+        <option value="Internship">Internship</option>
+        <option value="Graduate Program">Graduate Program</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Salary Expectation</label><input id="f_salary" placeholder="$80,000 – $95,000"/></div>
+    <div class="field-row"><label>Earliest Start Date</label><input id="f_startDate" type="date"/></div>
+    <div class="field-row"><label>Notice Period</label>
+      <select id="f_notice">
+        <option value="">Select</option>
+        <option value="Immediately">Immediately / No notice</option>
+        <option value="1 week">1 week</option>
+        <option value="2 weeks">2 weeks</option>
+        <option value="4 weeks">4 weeks (standard)</option>
+        <option value="3 months">3 months</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field-row"><label>Work Arrangement</label>
+      <select id="f_workMode">
+        <option value="">Select</option>
+        <option value="Hybrid">Hybrid</option>
+        <option value="On-site">On-site</option>
+        <option value="Remote">Remote</option>
+        <option value="Flexible">Flexible</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-label">Referral</div>
+  <div class="card">
+    <div class="field-row"><label>Referred by</label><input id="f_referrerName" placeholder="John Smith"/></div>
+    <div class="field-row"><label>Referrer Email</label><input id="f_referrerEmail" placeholder="john.smith@company.com.au"/></div>
+    <div class="field-row"><label>How did you hear?</label>
+      <select id="f_hearAbout">
+        <option value="">Select</option>
+        <option value="Company website">Company website</option>
+        <option value="LinkedIn">LinkedIn</option>
+        <option value="GradConnection">GradConnection</option>
+        <option value="Seek">Seek</option>
+        <option value="Indeed">Indeed</option>
+        <option value="Employee referral">Employee referral</option>
+        <option value="University careers fair">University careers fair</option>
+        <option value="Campus ambassador">Campus ambassador</option>
+        <option value="Social media">Social media</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- EXTRA -->
+<div class="tab-content" id="tab-extra">
+  <div class="section-label">Cover Letter / Short Answer</div>
+  <div class="card">
+    <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <label style="width:auto;text-align:left;">Why do you want to work here? (short)</label>
+      <textarea id="f_whyUs" placeholder="Paste your short motivation answer here..."></textarea>
+    </div>
+    <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <label style="width:auto;text-align:left;">Tell us about yourself</label>
+      <textarea id="f_aboutMe" placeholder="Brief professional summary..."></textarea>
+    </div>
+    <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <label style="width:auto;text-align:left;">Key strengths / skills</label>
+      <textarea id="f_strengths" placeholder="e.g. Python, project management, stakeholder comms..."></textarea>
+    </div>
+  </div>
+
+  <div class="section-label">Emergency Contact</div>
+  <div class="card">
+    <div class="field-row"><label>Full Name</label><input id="f_emergencyName" placeholder="Robert Smith"/></div>
+    <div class="field-row"><label>Relationship</label><input id="f_emergencyRel" placeholder="Parent"/></div>
+    <div class="field-row"><label>Phone</label><input id="f_emergencyPhone" placeholder="0400 111 222"/></div>
+  </div>
+
+  <div class="section-label">Other</div>
+  <div class="card">
+    <div class="field-row"><label>Student ID</label><input id="f_studentId" placeholder="s1234567"/></div>
+    <div class="field-row"><label>USI (Unique Student ID)</label><input id="f_usi" placeholder="Your USI if required"/></div>
+    <div class="field-row"><label>TFN (last 3 digits)</label><input id="f_tfn" placeholder="For payroll forms only"/></div>
+    <div class="field-row"><label>Super Fund Name</label><input id="f_superFund" placeholder="AustralianSuper"/></div>
+    <div class="field-row"><label>Super Member No.</label><input id="f_superMember" placeholder="1234567890"/></div>
+  </div>
+</div>
+
+<div class="status" id="status">Ready — fill in your details and save</div>
+
+<div class="btn-group">
+  <button class="btn btn-save" id="saveBtn">💾 Save Profile</button>
+  <button class="btn btn-fill" id="fillBtn">🚀 Autofill Page</button>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
