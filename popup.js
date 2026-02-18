@@ -4,7 +4,7 @@ const FIELD_IDS = [
   'f_phone','f_email','f_linkedin','f_website','f_github',
   'f_dob','f_gender','f_indigenous','f_disability',
   // Address
-  'f_street','f_suburb','f_state','f_postcode','f_country',
+  'f_street','f_street2','f_suburb','f_state','f_postcode','f_country',
   'f_relocate','f_preferredLocation',
   // Work Rights
   'f_workRights','f_eligibleToWork','f_visaExpiry','f_workHours','f_sponsorship',
@@ -128,3 +128,43 @@ document.getElementById('fillBtn').addEventListener('click', () => {
 });
 
 loadProfile();
+
+
+// Export current profile to a JSON file
+document.getElementById('exportBtn').addEventListener('click', () => {
+  chrome.storage.local.get(getKey(), result => {
+    const data = result[getKey()] || {};
+    const profileName = document.getElementById('profileSelect').selectedOptions[0].text;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'au-autofill-' + profileName.toLowerCase().replace(/\s+/g, '-') + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('✅ Profile exported!', 'ok');
+  });
+});
+
+// Import a profile from a JSON file
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      chrome.storage.local.set({ [getKey()]: data }, () => {
+        FIELD_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && data[id] !== undefined) el.value = data[id];
+        });
+        setStatus('✅ Profile imported!', 'ok');
+      });
+    } catch {
+      setStatus('❌ Invalid JSON file.', 'err');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});

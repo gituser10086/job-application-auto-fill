@@ -79,12 +79,17 @@ const FIELD_MAP = [
   // ── Address ───────────────────────────────────────────────
   {
     field: 'f_street',
-    keys: ['street', 'address line 1', 'address1', 'street address', 'unit', 'flat', 'house number', 'residential address'],
+    keys: ['street', 'address line 1', 'address1', 'street address', 'house number', 'residential address'],
+    excludeKeys: ['suburb', 'city', 'state', 'postcode']
+  },
+  {
+    field: 'f_street2',
+    keys: ['address line 2', 'address2', 'unit', 'flat', 'apt', 'apartment', 'suite', 'floor'],
     excludeKeys: ['suburb', 'city', 'state', 'postcode']
   },
   {
     field: 'f_suburb',
-    keys: ['suburb', 'city', 'town', 'locality', 'address line 2', 'address2', 'city/suburb'],
+    keys: ['suburb', 'city', 'town', 'locality', 'city/suburb'],
     excludeKeys: ['state', 'country', 'postcode']
   },
   {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AU Job Application Autofill",
-  "version": "1.0",
+  "version": "1.0.3",
   "description": "Auto-fill Australian job application forms — graduate, internship, and professional roles",
   "permissions": ["activeTab", "storage", "scripting"],
   "action": {

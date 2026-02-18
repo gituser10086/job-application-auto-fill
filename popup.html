@@ -63,6 +63,19 @@
 
     .profile-bar button:hover { background: #edf2f7; }
 
+    #importLabel {
+      padding: 4px 10px;
+      font-size: 11px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f7fafc;
+      cursor: pointer;
+      color: #4a5568;
+      white-space: nowrap;
+    }
+
+    #importLabel:hover { background: #edf2f7; }
+
     .tabs {
       display: flex;
       background: white;
@@ -253,6 +266,8 @@
     <option value="intern">Internship</option>
   </select>
   <button id="newProfileBtn">+ New</button>
+  <button id="exportBtn" title="Export profile to JSON file">⬆ Export</button>
+  <label id="importLabel" title="Import profile from JSON file">⬇ Import<input type="file" id="importFile" accept=".json" style="display:none"/></label>
 </div>
 
 <div class="tabs">
@@ -321,7 +336,8 @@
 <div class="tab-content" id="tab-address">
   <div class="section-label">Current Address</div>
   <div class="card">
-    <div class="field-row"><label>Street / Unit</label><input id="f_street" placeholder="12 George St"/></div>
+    <div class="field-row"><label>Address Line 1</label><input id="f_street" placeholder="12 George St"/></div>
+    <div class="field-row"><label>Address Line 2</label><input id="f_street2" placeholder="Unit 4 / Apt / Floor (optional)"/></div>
     <div class="field-row"><label>Suburb</label><input id="f_suburb" placeholder="Sydney"/></div>
     <div class="field-row"><label>State</label>
       <select id="f_state">
