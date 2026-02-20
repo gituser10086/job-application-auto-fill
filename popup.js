@@ -1,6 +1,6 @@
 const FIELD_IDS = [
   // Personal
-  'f_firstName','f_lastName','f_preferredName','f_pronouns',
+  'f_salutation','f_firstName','f_lastName','f_preferredName','f_pronouns',
   'f_phone','f_email','f_linkedin','f_website','f_github',
   'f_dob','f_gender','f_indigenous','f_disability',
   // Address
@@ -13,13 +13,7 @@ const FIELD_IDS = [
   'f_degreeLevel','f_fieldOfStudy','f_university','f_gradYear','f_gpa','f_honours',
   'f_priorDegree','f_priorUni','f_priorGradYear',
   'f_licence','f_licenceState','f_certs',
-  // Job Prefs
-  'f_desiredRole','f_employmentType','f_salary','f_startDate','f_notice','f_workMode',
-  'f_referrerName','f_referrerEmail','f_hearAbout',
-  // Extra
-  'f_whyUs','f_aboutMe','f_strengths',
-  'f_emergencyName','f_emergencyRel','f_emergencyPhone',
-  'f_studentId','f_usi','f_tfn','f_superFund','f_superMember',
+  // (Job Prefs and Extra tabs removed)
 ];
 
 const statusEl = document.getElementById('status');
@@ -95,34 +89,80 @@ document.getElementById('fillBtn').addEventListener('click', () => {
     if (el) data[id] = el.value;
   });
 
-  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-    const tabId = tabs[0].id;
+  chrome.storage.local.get(['au_api_key_gemini', 'au_use_ai'], r => {
+    const useAI = !!r.au_use_ai;
+    const apiKey = (r.au_api_key_gemini || '').trim();
 
-    function sendFill() {
-      chrome.tabs.sendMessage(tabId, { action: 'autofill', data }, res => {
-        if (chrome.runtime.lastError) {
-          setStatus('❌ Could not reach page. Try refreshing.', 'err');
-          return;
-        }
-        if (res && res.filled !== undefined) {
-          if (res.filled === 0) {
-            setStatus('⚠️ No matching fields found on this page.', '');
-          } else {
-            setStatus(`✅ Filled ${res.filled} field${res.filled !== 1 ? 's' : ''}!`, 'ok');
-          }
-        }
-      });
+    if (useAI && !apiKey) {
+      setStatus('⚠️ Add your Gemini API key in the ⚙ API tab first.', 'err');
+      return;
     }
 
-    // Try sending directly; if content script isn't loaded yet, inject it first
-    chrome.tabs.sendMessage(tabId, { action: 'ping' }, res => {
-      if (chrome.runtime.lastError || !res) {
-        chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] }, () => {
-          setTimeout(sendFill, 200);
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+      const tabId = tabs[0].id;
+
+      function sendFill() {
+        chrome.tabs.sendMessage(tabId, { action: 'autofill', data, useAI, apiKey }, res => {
+          if (chrome.runtime.lastError) {
+            setStatus('❌ Could not reach page. Try refreshing.', 'err');
+            return;
+          }
+          if (res && !res.success && res.error) {
+            setStatus('❌ AI error: ' + res.error, 'err');
+          } else if (res && res.filled !== undefined) {
+            if (res.filled === 0) {
+              setStatus('⚠️ No matching fields found on this page.', '');
+            } else {
+              setStatus(`✅ Filled ${res.filled} field${res.filled !== 1 ? 's' : ''}!`, 'ok');
+            }
+          }
+
+          // Debug panel
+          const panel = document.getElementById('debugPanel');
+          const isDebug = document.getElementById('f_debugMode').checked;
+          if (isDebug && res?.debug) {
+            const log = res.debug.log || [];
+            const hits = log.filter(l => l.status === 'hit');
+            const misses = log.filter(l => l.status === 'miss');
+            const skips = log.filter(l => l.status === 'skip');
+
+            let html = `<div class="debug-head">🔍 Debug — ${hits.length} filled, ${misses.length} failed, ${skips.length} skipped</div>`;
+
+            if (hits.length) {
+              html += `<div class="debug-hit">✓ FILLED (${hits.length})\n`;
+              hits.forEach(l => { html += `  [${l.idx}] ${l.profileKey} → "${l.value}"\n       hint: ${l.hint}\n`; });
+              html += `</div>`;
+            }
+            if (misses.length) {
+              html += `<div class="debug-miss">✗ FAILED (${misses.length})\n`;
+              misses.forEach(l => { html += `  [${l.idx}] ${l.profileKey} — ${l.reason}\n       hint: ${l.hint}\n`; });
+              html += `</div>`;
+            }
+            if (skips.length) {
+              html += `<div style="color:#a0aec0;">— SKIPPED by AI (${skips.length})\n`;
+              skips.forEach(l => { html += `  [${l.idx}] ${l.hint}\n`; });
+              html += `</div>`;
+            }
+
+            panel.innerHTML = html;
+            panel.classList.add('visible');
+          } else {
+            panel.classList.remove('visible');
+          }
         });
-      } else {
-        sendFill();
       }
+
+      setStatus(useAI ? '🤖 Asking AI to match fields…' : '⚡ Matching fields…', '');
+
+      chrome.tabs.sendMessage(tabId, { action: 'ping' }, res => {
+        if (chrome.runtime.lastError || !res) {
+          chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] }, () => {
+            setTimeout(sendFill, 200);
+          });
+        } else {
+          sendFill();
+        }
+      });
     });
   });
 });
@@ -167,4 +207,18 @@ document.getElementById('importFile').addEventListener('change', (e) => {
   };
   reader.readAsText(file);
   e.target.value = '';
+});
+
+// Load saved API settings
+chrome.storage.local.get(['au_api_key_gemini', 'au_debug_mode', 'au_use_ai'], r => {
+  if (r.au_api_key_gemini) document.getElementById('f_apiKey_gemini').value = r.au_api_key_gemini;
+  if (r.au_debug_mode) document.getElementById('f_debugMode').checked = true;
+  if (r.au_use_ai) document.getElementById('f_useAI').checked = true;
+});
+
+document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
+  const keyGemini = document.getElementById('f_apiKey_gemini').value.trim();
+  const debugMode = document.getElementById('f_debugMode').checked;
+  const useAI = document.getElementById('f_useAI').checked;
+  chrome.storage.local.set({ au_api_key_gemini: keyGemini, au_debug_mode: debugMode, au_use_ai: useAI }, () => setStatus('✅ Settings saved!', 'ok'));
 });

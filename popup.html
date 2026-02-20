@@ -241,7 +241,25 @@
     .status.ok { color: #0e9f6e; }
     .status.err { color: #e53e3e; }
 
-    /* scrollbar */
+    /* debug panel */
+    #debugPanel {
+      display: none;
+      background: #1a202c;
+      color: #68d391;
+      font-family: monospace;
+      font-size: 10px;
+      padding: 10px 12px;
+      max-height: 220px;
+      overflow-y: auto;
+      border-top: 2px solid #2d3748;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    #debugPanel.visible { display: block; }
+    #debugPanel .debug-head { color: #f6ad55; font-weight: bold; margin-bottom: 6px; }
+    #debugPanel .debug-miss { color: #fc8181; }
+    #debugPanel .debug-hit { color: #68d391; }
     .tab-content::-webkit-scrollbar { width: 4px; }
     .tab-content::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
   </style>
@@ -275,14 +293,25 @@
   <div class="tab" data-tab="address">Address</div>
   <div class="tab" data-tab="work">Work Rights</div>
   <div class="tab" data-tab="edu">Education</div>
-  <div class="tab" data-tab="job">Job Prefs</div>
-  <div class="tab" data-tab="extra">Extra</div>
+  <div class="tab" data-tab="settings">⚙ API</div>
 </div>
 
 <!-- PERSONAL -->
 <div class="tab-content active" id="tab-personal">
   <div class="section-label">Name</div>
   <div class="card">
+    <div class="field-row"><label>Salutation</label>
+      <select id="f_salutation">
+        <option value="">Select</option>
+        <option value="Mr">Mr</option>
+        <option value="Ms">Ms</option>
+        <option value="Mrs">Mrs</option>
+        <option value="Miss">Miss</option>
+        <option value="Mx">Mx</option>
+        <option value="Dr">Dr</option>
+        <option value="Prof">Prof</option>
+      </select>
+    </div>
     <div class="field-row"><label>First Name</label><input id="f_firstName" placeholder="Jane"/></div>
     <div class="field-row"><label>Last Name</label><input id="f_lastName" placeholder="Smith"/></div>
     <div class="field-row"><label>Preferred Name</label><input id="f_preferredName" placeholder="Optional nickname"/></div>
@@ -508,103 +537,54 @@
 </div>
 
 <!-- JOB PREFS -->
-<div class="tab-content" id="tab-job">
-  <div class="section-label">Role Preferences</div>
+<!-- SETTINGS -->
+<div class="tab-content" id="tab-settings">
+  <div class="section-label">Matching Mode</div>
   <div class="card">
-    <div class="field-row"><label>Desired Role</label><input id="f_desiredRole" placeholder="Software Engineer"/></div>
-    <div class="field-row"><label>Employment Type</label>
-      <select id="f_employmentType">
-        <option value="">Select</option>
-        <option value="Full-time">Full-time</option>
-        <option value="Part-time">Part-time</option>
-        <option value="Casual">Casual</option>
-        <option value="Contract">Contract</option>
-        <option value="Internship">Internship</option>
-        <option value="Graduate Program">Graduate Program</option>
-      </select>
+    <div class="field-row">
+      <label>Use AI Matching</label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="f_useAI" style="width:auto;"/>
+        <span style="font-size:11px;color:#4a5568;">Use Gemini AI (slower, smarter)</span>
+      </label>
     </div>
-    <div class="field-row"><label>Salary Expectation</label><input id="f_salary" placeholder="$80,000 – $95,000"/></div>
-    <div class="field-row"><label>Earliest Start Date</label><input id="f_startDate" type="date"/></div>
-    <div class="field-row"><label>Notice Period</label>
-      <select id="f_notice">
-        <option value="">Select</option>
-        <option value="Immediately">Immediately / No notice</option>
-        <option value="1 week">1 week</option>
-        <option value="2 weeks">2 weeks</option>
-        <option value="4 weeks">4 weeks (standard)</option>
-        <option value="3 months">3 months</option>
-        <option value="Other">Other</option>
-      </select>
-    </div>
-    <div class="field-row"><label>Work Arrangement</label>
-      <select id="f_workMode">
-        <option value="">Select</option>
-        <option value="Hybrid">Hybrid</option>
-        <option value="On-site">On-site</option>
-        <option value="Remote">Remote</option>
-        <option value="Flexible">Flexible</option>
-      </select>
+    <div style="font-size:10px;color:#a0aec0;margin-top:4px;padding-left:118px;">
+      Off = instant keyword matching. On = AI understands field meaning.
     </div>
   </div>
 
-  <div class="section-label">Referral</div>
+  <div class="section-label">API Key</div>
   <div class="card">
-    <div class="field-row"><label>Referred by</label><input id="f_referrerName" placeholder="John Smith"/></div>
-    <div class="field-row"><label>Referrer Email</label><input id="f_referrerEmail" placeholder="john.smith@company.com.au"/></div>
-    <div class="field-row"><label>How did you hear?</label>
-      <select id="f_hearAbout">
-        <option value="">Select</option>
-        <option value="Company website">Company website</option>
-        <option value="LinkedIn">LinkedIn</option>
-        <option value="GradConnection">GradConnection</option>
-        <option value="Seek">Seek</option>
-        <option value="Indeed">Indeed</option>
-        <option value="Employee referral">Employee referral</option>
-        <option value="University careers fair">University careers fair</option>
-        <option value="Campus ambassador">Campus ambassador</option>
-        <option value="Social media">Social media</option>
-        <option value="Other">Other</option>
-      </select>
+    <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:5px;">
+      <label style="width:auto;font-weight:600;">Gemini API Key</label>
+      <input id="f_apiKey_gemini" type="password" placeholder="AIza..." style="width:100%;font-family:monospace;font-size:11px;"/>
+      <div style="font-size:10px;color:#a0aec0;">Get a key at <strong>aistudio.google.com</strong> — free tier available</div>
     </div>
-  </div>
-</div>
-
-<!-- EXTRA -->
-<div class="tab-content" id="tab-extra">
-  <div class="section-label">Cover Letter / Short Answer</div>
-  <div class="card">
-    <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <label style="width:auto;text-align:left;">Why do you want to work here? (short)</label>
-      <textarea id="f_whyUs" placeholder="Paste your short motivation answer here..."></textarea>
-    </div>
-    <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <label style="width:auto;text-align:left;">Tell us about yourself</label>
-      <textarea id="f_aboutMe" placeholder="Brief professional summary..."></textarea>
-    </div>
-    <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <label style="width:auto;text-align:left;">Key strengths / skills</label>
-      <textarea id="f_strengths" placeholder="e.g. Python, project management, stakeholder comms..."></textarea>
+    <div style="margin-top:10px;">
+      <button class="btn btn-save" id="saveApiKeyBtn" style="width:100%;padding:7px;">💾 Save Settings</button>
     </div>
   </div>
 
-  <div class="section-label">Emergency Contact</div>
+  <div class="section-label">Debug</div>
   <div class="card">
-    <div class="field-row"><label>Full Name</label><input id="f_emergencyName" placeholder="Robert Smith"/></div>
-    <div class="field-row"><label>Relationship</label><input id="f_emergencyRel" placeholder="Parent"/></div>
-    <div class="field-row"><label>Phone</label><input id="f_emergencyPhone" placeholder="0400 111 222"/></div>
+    <div class="field-row">
+      <label>Debug Mode</label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="f_debugMode" style="width:auto;"/>
+        <span style="font-size:11px;color:#4a5568;">Show AI response after each fill</span>
+      </label>
+    </div>
   </div>
 
-  <div class="section-label">Other</div>
-  <div class="card">
-    <div class="field-row"><label>Student ID</label><input id="f_studentId" placeholder="s1234567"/></div>
-    <div class="field-row"><label>USI (Unique Student ID)</label><input id="f_usi" placeholder="Your USI if required"/></div>
-    <div class="field-row"><label>TFN (last 3 digits)</label><input id="f_tfn" placeholder="For payroll forms only"/></div>
-    <div class="field-row"><label>Super Fund Name</label><input id="f_superFund" placeholder="AustralianSuper"/></div>
-    <div class="field-row"><label>Super Member No.</label><input id="f_superMember" placeholder="1234567890"/></div>
+  <div class="section-label">Cost</div>
+  <div class="card" style="font-size:11px;color:#4a5568;line-height:1.6;">
+    <strong>Gemini 2.5 Flash</strong> — free tier available
   </div>
 </div>
 
 <div class="status" id="status">Ready — fill in your details and save</div>
+
+<div id="debugPanel"></div>
 
 <div class="btn-group">
   <button class="btn btn-save" id="saveBtn">💾 Save Profile</button>
